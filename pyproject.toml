@@ -21,8 +21,20 @@ classifiers = [
 ]
 
 dependencies = [
-    # Microsoft Agent Framework 1.0 — GA April 2026; pin to 1.0.x; SK fallback within 1-yr window
-    "agent-framework==1.0.*",
+    # Microsoft Agent Framework 1.x
+    # NOTE: the `agent-framework` meta-package is uninstallable — its `[all]` extra
+    # pins agent-framework-core to an exact version while also pulling
+    # agent-framework-ag-ui, which requires a newer core (an internal contradiction).
+    # We therefore depend on the individual sub-packages we actually import:
+    #   - agent_framework:         ChatAgent, HostedMcpTool, MCPTool -> agent-framework-core (+ mcp)
+    #   - agent_framework.foundry: FoundryChatClient                -> agent-framework-foundry
+    "agent-framework-core>=1.9.0,<2.0.0",
+    "agent-framework-foundry>=1.8.0,<2.0.0",
+
+    # Model Context Protocol client (HostedMcpTool / MCPTool). Not pulled by
+    # agent-framework-core unless the `[all]` extra is used, so declare it explicitly.
+    "mcp>=1.29.0,<2.0.0",
+
 
     # Azure Identity — Managed Identity + DefaultAzureCredential
     "azure-identity>=1.16.0,<2.0.0",
@@ -52,16 +64,13 @@ dependencies = [
     "pydantic-settings>=2.3.0,<3.0.0",
 
     # OpenTelemetry — distributed tracing per workflow_id (P12)
-    "opentelemetry-api>=1.25.0,<2.0.0",
-    "opentelemetry-sdk>=1.25.0,<2.0.0",
-    "opentelemetry-exporter-otlp>=1.25.0,<2.0.0",
-    "opentelemetry-instrumentation-azure-sdk>=0.1.0",
+    # Floor is 1.26 to satisfy azure-monitor-opentelemetry-exporter (requires api ~=1.26)
+    "opentelemetry-api>=1.26.0,<2.0.0",
+    "opentelemetry-sdk>=1.26.0,<2.0.0",
+    "opentelemetry-exporter-otlp>=1.26.0,<2.0.0",
 
     # Azure Monitor OpenTelemetry exporter — App Insights
     "azure-monitor-opentelemetry-exporter>=1.0.0b21,<2.0.0",
-
-    # HMAC utilities for Slack request-signature verification (G8: no secrets in code)
-    "hmac; python_version>='3.11'",
 ]
 
 [project.optional-dependencies]

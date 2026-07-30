@@ -2,11 +2,23 @@
 # Generated from pyproject.toml dependencies
 # Run `pip-audit` against this file in CI to detect CVEs
 
-# Microsoft Agent Framework 1.0
-agent-framework==1.0.0
+# Microsoft Agent Framework 1.x
+# NOTE: the `agent-framework` meta-package (==1.0.0) is uninstallable — its `[all]`
+# extra pins agent-framework-core==1.0.0 while pulling agent-framework-ag-ui, which
+# requires core>=1.11.0 (an internal contradiction). We therefore depend on the
+# individual sub-packages we actually import instead of the broken meta-package:
+#   - agent_framework:         ChatAgent, HostedMcpTool, MCPTool   -> agent-framework-core (+ mcp)
+#   - agent_framework.foundry: FoundryChatClient                  -> agent-framework-foundry
+agent-framework-core==1.9.0
+agent-framework-foundry==1.8.2
 
-# Azure Identity
-azure-identity==1.16.1
+# Model Context Protocol client (HostedMcpTool / MCPTool). Not pulled by core
+# unless the `[all]` extra is used, so pin it explicitly.
+mcp==1.29.0
+
+
+# Azure Identity (azure-monitor-opentelemetry-exporter 1.0.0b55 requires ~=1.17)
+azure-identity==1.17.1
 
 # Azure Key Vault
 azure-keyvault-certificates==4.8.0
@@ -28,24 +40,27 @@ azure-functions==1.20.0
 cryptography==43.0.3
 
 # Pydantic v2 — typed models + settings
-pydantic==2.7.4
-pydantic-settings==2.3.4
+# (mcp >=1.24.0, dragged in by agent-framework-core[all], requires pydantic >=2.11.0)
+pydantic==2.11.10
+pydantic-settings==2.5.2
 annotated-types==0.7.0
-pydantic-core==2.20.1
+pydantic-core==2.33.2
 
-# OpenTelemetry
-opentelemetry-api==1.25.0
-opentelemetry-sdk==1.25.0
-opentelemetry-exporter-otlp==1.25.0
-opentelemetry-exporter-otlp-proto-grpc==1.25.0
-opentelemetry-exporter-otlp-proto-http==1.25.0
-opentelemetry-proto==1.25.0
-opentelemetry-instrumentation-azure-sdk==0.1.0
+# OpenTelemetry — aligned to 1.43.x
+# (agent-framework-core 1.0.0 requires api >=1.39.0,<2; azure-monitor-opentelemetry-exporter 1.0.0b55 requires api/sdk ~=1.43.0)
+opentelemetry-api==1.43.0
+opentelemetry-sdk==1.43.0
+opentelemetry-exporter-otlp==1.43.0
+opentelemetry-exporter-otlp-proto-grpc==1.43.0
+opentelemetry-exporter-otlp-proto-http==1.43.0
+opentelemetry-proto==1.43.0
 
-# Azure Monitor OpenTelemetry exporter
-azure-monitor-opentelemetry-exporter==1.0.0b29
+# Azure Monitor OpenTelemetry exporter (b55 supports OTel 1.43.x)
+azure-monitor-opentelemetry-exporter==1.0.0b55
 
 # Azure core (transitive, pinned for reproducibility)
-azure-core==1.30.2
+# (azure-ai-projects >=2.2.0, pulled in by agent-framework-foundry, requires azure-core >=1.37.0)
+azure-core==1.39.0
+
 isodate==0.6.1
-typing-extensions==4.12.2
+typing-extensions==4.15.0
