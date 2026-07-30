@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCRA — 1-Page Workflow Overview</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background:#d8d8d8;
+    font-family:Arial,'Helvetica Neue',sans-serif;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:14px; min-height:100vh;
+  }
+
+  .slide {
+    background:#fff;
+    width:100%; max-width:1280px;
+    box-shadow:0 4px 24px rgba(0,0,0,.2);
+    border:1px solid #bbb;
+    display:flex; flex-direction:column;
+  }
+
+  /* HEADER */
+  .hdr {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 16px; border-bottom:3px solid #1F3864;
+  }
+  .hdr-title { font-size:16px; font-weight:900; color:#1F3864; }
+  .hdr-sub   { font-size:9.5px; color:#666; margin-top:1px; }
+
+  .slt { border-collapse:collapse; font-size:9.5px; font-weight:700; }
+  .slt th,.slt td { border:1px solid #ccc; text-align:center; padding:2px 10px; min-width:60px; }
+  .sh  { background:#FF00C8; color:#fff; font-size:8.5px; letter-spacing:.04em; border-color:#FF00C8; }
+  .s1  { background:#008080; color:#fff; }
+  .s2  { background:#00B0F0; color:#fff; }
+  .s3  { background:#7030A0; color:#fff; }
+  .s4  { background:#00853E; color:#fff; }
+  .sck { background:#fff; color:#1F3864; font-size:12px; font-weight:900; }
+  .sem { background:#f5f5f5; }
+
+  /* BODY */
+  .body { padding:10px 16px 12px; display:flex; flex-direction:column; gap:8px; }
+
+  .sec-lbl {
+    font-size:8px; font-weight:800; text-transform:uppercase;
+    letter-spacing:.12em; color:#fff; background:#1F3864;
+    display:inline-block; padding:1px 7px; margin-bottom:5px;
+  }
+
+  /* AS-IS STRIP */
+  .asis-strip {
+    display:flex; align-items:center; gap:3px; flex-wrap:nowrap;
+    padding:5px 10px; background:#fff8f6;
+    border:1.5px dashed #f4b183; border-radius:3px;
+  }
+  .asis-tag {
+    font-size:8px; font-weight:800; text-transform:uppercase;
+    background:#C00000; color:#fff; padding:1px 6px; border-radius:2px; flex-shrink:0;
+  }
+  .mb { font-size:9px; border:1.5px dashed #ccc; border-radius:2px; padding:3px 8px; background:#fafafa; color:#555; white-space:nowrap; text-align:center; line-height:1.3; }
+  .mb-w { border-color:#ffd966 !important; background:#fffef0; color:#7d5a00; }
+  .arr  { color:#bbb; font-size:10px; flex-shrink:0; }
+  .asis-note { margin-left:auto; font-size:8.5px; color:#C00000; font-weight:700; flex-shrink:0; padding-left:10px; white-space:nowrap; }
+
+  /* FLOW */
+  .flow { display:flex; align-items:stretch; gap:0; }
+
+  .step {
+    flex:1; min-width:0; border:2px solid #1F3864; border-radius:4px;
+    background:#fff; padding:7px 5px 6px;
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+  }
+  .step-h  { border-color:#C55A11; background:#fff8f3; }
+  .step-w  { border-color:#FFC000; background:#fffef4; flex:0 0 82px; justify-content:center; }
+
+  .cn {
+    width:14px; flex-shrink:0; align-self:center;
+    position:relative; height:28px;
+  }
+  .cn::before { content:''; position:absolute; top:50%; left:0; right:0; height:1.5px; background:#1F3864; transform:translateY(-50%); }
+  .cn::after  { content:''; position:absolute; right:0; top:50%; transform:translateY(-50%); border-top:3px solid transparent; border-bottom:3px solid transparent; border-left:5px solid #1F3864; }
+
+  .sn  { font-size:8px; font-weight:800; color:#fff; background:#1F3864; padding:1px 5px; border-radius:2px; margin-bottom:4px; }
+  .step-h .sn { background:#C55A11; }
+  .step-w .sn { background:#FFC000; color:#7d5a00; }
+
+  .ico  { font-size:17px; margin-bottom:3px; line-height:1; }
+  .nm   { font-size:9.5px; font-weight:800; color:#1F3864; line-height:1.25; margin-bottom:4px; }
+  .step-h .nm { color:#843c0c; }
+  .step-w .nm { color:#7d5a00; font-size:9px; }
+
+  .desc  { font-size:8.5px; color:#555; line-height:1.45; flex:1; margin-bottom:4px; }
+  .gnote { font-size:7.5px; color:#843c0c; font-weight:700; margin-bottom:4px; }
+
+  .wt { font-size:13px; font-weight:800; color:#7d5a00; }
+  .wn { font-size:8px; color:#888; line-height:1.4; margin:2px 0; }
+  .we { font-size:8px; color:#C00000; font-weight:700; }
+
+  .bdg {
+    display:inline-block; font-size:7px; font-weight:800;
+    text-transform:uppercase; letter-spacing:.05em;
+    padding:1px 6px; border-radius:2px; border:1px solid; margin-top:auto;
+  }
+  .bdg-a { background:#e2f0d9; color:#375623; border-color:#a9d18e; }
+  .bdg-h { background:#fce4d6; color:#843c0c; border-color:#f4b183; }
+
+  /* STATE MACHINE */
+  .sm-row {
+    display:flex; align-items:center; flex-wrap:wrap; gap:3px;
+    background:#f4f8fd; border:1px solid #9dc3e6;
+    border-radius:3px; padding:5px 10px;
+  }
+  .ss  { font-size:8.5px; font-weight:700; padding:2px 7px; border-radius:2px; border:1px solid; white-space:nowrap; }
+  .sa  { font-size:9px; color:#aaa; flex-shrink:0; }
+  .ss-n { background:#deebf7; border-color:#9dc3e6; color:#1F3864; }
+  .ss-w { background:#fff2cc; border-color:#ffd966; color:#7d5a00; }
+  .ss-k { background:#e2f0d9; border-color:#a9d18e; color:#375623; font-weight:800; }
+  .ss-b { background:#fce4d6; border-color:#f4b183; color:#843c0c; }
+  .sm-note { font-size:8px; color:#888; font-style:italic; margin-left:auto; flex-shrink:0; padding-left:10px; }
+
+  /* BOTTOM 4-COL */
+  .bot { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; }
+
+  .bi { border-radius:3px; padding:7px 9px; border:1px solid; }
+  .bi-b { background:#f4f8fd; border-color:#9dc3e6; }
+  .bi-y { background:#fffef0; border-color:#ffd966; }
+  .bi-r { background:#fff8f6; border-color:#f4b183; }
+  .bi-g { background:#f2f9f5; border-color:#a9d18e; }
+
+  .bihead { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-bottom:5px; }
+  .bi-b .bihead { color:#1F3864; }
+  .bi-y .bihead { color:#7d5a00; }
+  .bi-r .bihead { color:#843c0c; }
+  .bi-g .bihead { color:#375623; }
+
+  .bir { display:flex; gap:4px; align-items:baseline; padding:1.5px 0; border-bottom:1px solid rgba(0,0,0,.05); font-size:9px; color:#444; line-height:1.35; }
+  .bir:last-child { border-bottom:none; }
+  .bir .lk { font-weight:700; flex-shrink:0; }
+  .bi-b .lk { color:#1F3864; }
+  .bi-y .lk { color:#7d5a00; }
+  .bi-r .lk { color:#C00000; }
+  .bi-g .lk { color:#375623; }
+
+  /* FOOTER */
+  .foot {
+    padding:4px 16px 6px; font-size:8.5px; color:#777; font-style:italic;
+    border-top:1px solid #ddd;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">Idea &nbsp;&middot;&nbsp; ASCRA &mdash; Autonomous SSL Certificate Renewal Agent</div>
+      <div class="hdr-sub">Workflow Overview &nbsp;&middot;&nbsp; As-is vs To-be &nbsp;&middot;&nbsp; Human approval gate preserved &nbsp;&middot;&nbsp; 8 Release-Blocker Guardrails &nbsp;&middot;&nbsp; Azure AI Foundry &nbsp;&middot;&nbsp; MAF 1.0 / Semantic Kernel &nbsp;&middot;&nbsp; GPT-4o</div>
+    </div>
+    <div style="flex-shrink:0;margin-left:14px;">
+      <table class="slt">
+        <thead>
+          <tr><td colspan="4" class="sh">Service Line</td></tr>
+          <tr><th class="s1">OneInfra</th><th class="s2">MSO</th><th class="s3">SEED</th><th class="s4">CorpIT</th></tr>
+        </thead>
+        <tbody><tr><td class="sem"></td><td class="sck">&#10003;</td><td class="sem"></td><td class="sem"></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- AS-IS -->
+    <div>
+      <span class="sec-lbl">As-is &mdash; manual serial process &nbsp;&middot;&nbsp; 1 engineer per renewal &nbsp;&middot;&nbsp; total duration: 1&ndash;3 weeks (dominated by external wait times)</span>
+      <div class="asis-strip">
+        <span class="asis-tag">&#9888; Manual</span>
+        <span class="mb">1&nbsp; Log into<br>Dynatrace</span><span class="arr">&#8594;</span>
+        <span class="mb">2&nbsp; Generate CSR<br><span style="font-size:7.5px;color:#C00000;">local &mdash; key exposed</span></span><span class="arr">&#8594;</span>
+        <span class="mb">3&nbsp; Jira ticket<br>+ attach CSR</span><span class="arr">&#8594;</span>
+        <span class="mb mb-w">4&nbsp; Await PD approval<br><span style="font-size:7.5px;">no formal SLA &mdash; days</span></span><span class="arr">&#8594;</span>
+        <span class="mb">5&nbsp; Email PKI team<br><span style="font-size:7.5px;">fill form manually</span></span><span class="arr">&#8594;</span>
+        <span class="mb mb-w">6&nbsp; Await CER reply<br><span style="font-size:7.5px;">0&ndash;5 business days (PKI SLA)</span></span><span class="arr">&#8594;</span>
+        <span class="mb">7&nbsp; Verify CER<br><span style="font-size:7.5px;color:#C00000;">error-prone, manual</span></span><span class="arr">&#8594;</span>
+        <span class="mb">8&nbsp; ServiceNow CHG<br>manually</span>
+        <span class="asis-note">Serial &nbsp;&middot;&nbsp; 1&ndash;2 certs/day &nbsp;&middot;&nbsp; incomplete audit &nbsp;&middot;&nbsp; no escalation SLA</span>
+      </div>
+    </div>
+
+    <!-- TO-BE LABEL -->
+    <span class="sec-lbl">To-be &mdash; ASCRA automated workflow &nbsp;&middot;&nbsp; Trigger: Dynatrace webhook &rarr; Event Grid &rarr; Service Bus &rarr; Logic App &rarr; Azure Function &rarr; GPT-4o orchestrator (MAF 1.0)</span>
+
+    <!-- FLOW -->
+    <div class="flow">
+
+      <div class="step">
+        <div class="sn">T1</div>
+        <div class="ico">&#128196;</div>
+        <div class="nm">Alert Parsed &amp;<br>CMDB Enriched</div>
+        <div class="desc">Alert dequeued from Service Bus. Certificate details pulled from CMDB (CN, SAN, app owner). Workflow record created in Cosmos DB with idempotency key.</div>
+        <div class="gnote">Missing CMDB record &rarr; halt + escalate</div>
+        <span class="bdg bdg-a">Auto &middot; &lt; 60 s</span>
+      </div>
+
+      <div class="cn"></div>
+
+      <div class="step">
+        <div class="sn">T2</div>
+        <div class="ico">&#128273;</div>
+        <div class="nm">CSR Generated<br>in Key Vault HSM</div>
+        <div class="desc">New RSA key pair created inside Azure Key Vault Managed HSM (FIPS 140-2 L3). CSR signed. Jira ticket opened and CSR attached &mdash; no local key material ever.</div>
+        <div class="gnote">G7: key non-exportable &nbsp; G6: wildcard &rarr; CAB</div>
+        <span class="bdg bdg-a">Auto &middot; &lt; 90 s</span>
+      </div>
+
+      <div class="cn"></div>
+
+      <!-- WAIT: PD approval -->
+      <div class="step step-w">
+        <div class="sn">WAIT</div>
+        <div class="ico" style="font-size:15px;">&#9203;</div>
+        <div class="nm">Blocked on PD</div>
+        <div class="wt">0 &ndash; 48 h</div>
+        <div class="wn">Workflow live but suspended. No auto-approve ever.</div>
+        <div class="we">&#8595; escalate @ 48 h</div>
+      </div>
+
+      <div class="cn"></div>
+
+      <div class="step step-h">
+        <div class="sn">T3 &#9733;</div>
+        <div class="ico">&#128101;</div>
+        <div class="nm">PD Approval Gate<br>(HITL &mdash; preserved)</div>
+        <div class="desc">Teams Adaptive Card sent to Product Director via Microsoft Graph. PD clicks Approve or Reject. Callback validated by APIM (Entra identity + MFA + thread ID). Decision recorded in Cosmos.</div>
+        <div class="gnote">G1: state machine blocks progression without recorded PD decision &mdash; cannot be bypassed by model</div>
+        <span class="bdg bdg-h">&#9733; HITL Gate</span>
+      </div>
+
+      <div class="cn"></div>
+
+      <div class="step">
+        <div class="sn">T4</div>
+        <div class="ico">&#128140;</div>
+        <div class="nm">PKI Email<br>Dispatched</div>
+        <div class="desc">CSR request email sent to PKI team mailbox via Microsoft Graph. Graph subscription created to watch for the CER reply. Idempotency key prevents duplicate sends.</div>
+        <div class="gnote">Rate limited: 10 emails/min</div>
+        <span class="bdg bdg-a">Auto &middot; &lt; 2 min</span>
+      </div>
+
+      <div class="cn"></div>
+
+      <!-- WAIT: PKI -->
+      <div class="step step-w">
+        <div class="sn">WAIT</div>
+        <div class="ico" style="font-size:15px;">&#9203;</div>
+        <div class="nm">Blocked on PKI</div>
+        <div class="wt">0 &ndash; 5<br>days</div>
+        <div class="wn">External SLA. Reminders at 24 h &amp; 72 h.</div>
+        <div class="we">&#8595; escalate @ 5 days</div>
+      </div>
+
+      <div class="cn"></div>
+
+      <div class="step">
+        <div class="sn">T5</div>
+        <div class="ico">&#9989;</div>
+        <div class="nm">CER Verified<br>(Deterministic)</div>
+        <div class="desc">PKI reply triggers Graph event &rarr; Logic App &rarr; Azure Function. CER stored in Blob (WORM, 7-yr hold). Deterministic code checks CN, SAN, chain, and expiry &ge; 365 days.</div>
+        <div class="gnote">G2: mismatch &rarr; FAILED terminal; LLM cannot override</div>
+        <span class="bdg bdg-a">Auto &middot; &lt; 60 s</span>
+      </div>
+
+      <div class="cn"></div>
+
+      <div class="step">
+        <div class="sn">T6</div>
+        <div class="ico">&#127915;</div>
+        <div class="nm">ServiceNow CHG<br>&amp; Completion</div>
+        <div class="desc">Pre-approved HDC change ticket raised in ServiceNow. Jira ticket linked. CER Blob URL attached. Teams completion card posted. Cosmos state &rarr; COMPLETE.</div>
+        <div class="gnote">Idempotency key on CHG &nbsp; SNOW rate 30/min</div>
+        <span class="bdg bdg-a">Auto &middot; &lt; 2 min</span>
+      </div>
+
+    </div><!-- flow -->
+
+    <!-- STATE MACHINE -->
+    <div class="sm-row">
+      <div class="ss ss-n">ALERT_RECEIVED</div><div class="sa">&#8594;</div>
+      <div class="ss ss-n">PARSED</div><div class="sa">&#8594;</div>
+      <div class="ss ss-n">CSR_READY</div><div class="sa">&#8594;</div>
+      <div class="ss ss-n">CSR_REQUESTED</div><div class="sa">&#8594;</div>
+      <div class="ss ss-w">&#9203; awaiting PD approval</div><div class="sa">&#8594;</div>
+      <div class="ss ss-n">APPROVED</div><div class="sa">&#8594;</div>
+      <div class="ss ss-w">&#9203; awaiting PKI reply</div><div class="sa">&#8594;</div>
+      <div class="ss ss-n">PKI_REPLIED</div><div class="sa">&#8594;</div>
+      <div class="ss ss-n">VERIFIED</div><div class="sa">&#8594;</div>
+      <div class="ss ss-k">&#10003; COMPLETE</div>
+      <div style="display:flex;gap:5px;margin-left:10px;flex-shrink:0;">
+        <div class="ss ss-b" style="font-size:7.5px;padding:1px 5px;">REJECTED &#8855; PD declined</div>
+        <div class="ss ss-b" style="font-size:7.5px;padding:1px 5px;">FAILED &#8855; G2 / G3 / kill-switch</div>
+      </div>
+      <div class="sm-note">Code-enforced transitions &middot; LLM proposes, state machine disposes &middot; Yellow = live, blocked on human/external &nbsp;&mdash;&nbsp; MAF 1.0 (GA Apr 2026) built on Semantic Kernel 1.x &middot; SK is the documented 1-yr fallback (Apr 2026 &ndash; Apr 2027)</div>
+    </div>
+
+    <!-- BOTTOM 4-COL -->
+    <div class="bot">
+
+      <div class="bi bi-b">
+        <div class="bihead">What ASCRA eliminates</div>
+        <div class="bir"><span class="lk">&#10003;</span>Manual login across 6 tools per renewal</div>
+        <div class="bir"><span class="lk">&#10003;</span>CSR on local machines &mdash; private key exposure risk</div>
+        <div class="bir"><span class="lk">&#10003;</span>Manual Jira ticket creation and CSR attachment</div>
+        <div class="bir"><span class="lk">&#10003;</span>Manual PKI email form composition and dispatch</div>
+        <div class="bir"><span class="lk">&#10003;</span>Manual X.509 verification (error-prone)</div>
+        <div class="bir"><span class="lk">&#10003;</span>Manual ServiceNow change ticket creation</div>
+        <div class="bir"><span class="lk">&#10003;</span>Incomplete audit &mdash; full hash-chained log per tool call</div>
+        <div class="bir"><span class="lk">&#10003;</span>Serial bottleneck &mdash; up to 100+ concurrent batch renewals</div>
+      </div>
+
+      <div class="bi bi-y">
+        <div class="bihead">What ASCRA does NOT change</div>
+        <div class="bir"><span class="lk">&#9888;</span>PKI team SLA &mdash; still 0&ndash;5 business days (external)</div>
+        <div class="bir"><span class="lk">&#9888;</span>PD decision time &mdash; 0&ndash;48 h; ASCRA adds deadline + escalation</div>
+        <div class="bir"><span class="lk">&#9888;</span>Certificate deployment to the endpoint (v1 out of scope)</div>
+        <div class="bir"><span class="lk">&#9888;</span>CAB process for wildcard certs (G6 enforces this)</div>
+        <div class="bir"><span class="lk">&#9888;</span>PKI team workload or resourcing</div>
+        <div class="bir" style="color:#7d5a00;font-weight:700;font-size:8.5px;padding-top:4px;"><span class="lk">&#9888;</span>Total calendar time = automated steps (&lt;15 min) + human / external wait time</div>
+      </div>
+
+      <div class="bi bi-r">
+        <div class="bihead">8 Guardrails &mdash; all release blockers</div>
+        <div class="bir"><span class="lk">G1</span>Never skip PD approval &mdash; state machine enforced</div>
+        <div class="bir"><span class="lk">G2</span>Reject CN / SAN mismatch &mdash; deterministic, not LLM</div>
+        <div class="bir"><span class="lk">G3</span>Halt + escalate after 2 consecutive tool errors</div>
+        <div class="bir"><span class="lk">G4</span>One structured audit entry per tool call</div>
+        <div class="bir"><span class="lk">G5</span>All MCP output is untrusted data &mdash; never instructions</div>
+        <div class="bir"><span class="lk">G6</span>Block wildcard CSRs &mdash; mandatory CAB routing</div>
+        <div class="bir"><span class="lk">G7</span>Private keys non-exportable, never leave HSM</div>
+        <div class="bir"><span class="lk">G8</span>No secrets in code &mdash; Managed Identity + Key Vault only</div>
+      </div>
+
+      <div class="bi bi-g">
+        <div class="bihead">Architecture &amp; scope</div>
+        <div class="bir"><span class="lk">LLM</span>GPT-4o (gpt-4o-2024-11-20) &mdash; orchestration only</div>
+        <div class="bir"><span class="lk">FW</span>MAF 1.0 (GA Apr 2026) / Semantic Kernel 1.x fallback</div>
+        <div class="bir"><span class="lk">Runtime</span>Azure AI Foundry Agent Service</div>
+        <div class="bir"><span class="lk">HSM</span>Azure Key Vault Managed HSM &middot; FIPS 140-2 L3</div>
+        <div class="bir"><span class="lk">State</span>Cosmos DB &middot; Blob WORM (7-yr CER hold)</div>
+        <div class="bir"><span class="lk">Auth</span>Entra ID + Managed Identity &middot; zero passwords</div>
+        <div class="bir"><span class="lk">Modes</span>Direct (Teams / Copilot) &middot; Embedded &middot; Backend</div>
+        <div class="bir"><span class="lk">POC</span>12 weeks &middot; ~30 person-days &middot; MSO service line</div>
+      </div>
+
+    </div>
+
+  </div><!-- body -->
+
+  <div class="foot">
+    SSL Renewal Agentic AI Implementation Guide v1.3 (2026-07-28) &nbsp;&middot;&nbsp; ASCRA Idea 03 &nbsp;&middot;&nbsp; MSO Service Line &nbsp;&middot;&nbsp; Infra: Azure Functions (Python 3.11) &middot; Logic Apps &middot; Service Bus &middot; Event Grid &middot; APIM &middot; Bicep &middot; GitHub Actions OIDC
+  </div>
+
+</div>
+</body>
+</html>

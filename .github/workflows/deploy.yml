@@ -1,0 +1,214 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "prod"
+        type: choice
+        options: [dev, uat, prod]
+
+permissions:
+  id-token: write   # OIDC federation — no stored cloud credentials (G8)
+  contents: read
+
+env:
+  RG_PROD: ssl-renewal-rg-prod
+  RG_UAT: ssl-renewal-rg-uat
+  RG_DEV: ssl-renewal-rg-dev
+  FUNC_APP_PROD: ssl-renewal-func-prod
+  FUNC_APP_UAT: ssl-renewal-func-uat
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 1 – Lint · Test · Audit
+  # Every commit to main must pass this gate before any cloud interaction.
+  # ────────────────────────────────────────────────────────────────────────────
+  validate:
+    name: Lint · Test · Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Type-check (mypy)
+        run: mypy src --ignore-missing-imports
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Unit + security tests (coverage ≥ 80%)
+        run: |
+          pytest \
+            --cov=src \
+            --cov-report=xml:coverage.xml \
+            --cov-fail-under=80 \
+            --ignore=tests/test_e2e \
+            -v
+        env:
+          # Minimal settings so pydantic-settings doesn't fail at import
+          FOUNDRY_PROJECT_ENDPOINT: https://placeholder.api.azureml.ms
+          KEY_VAULT_URI: https://placeholder.vault.azure.net
+          COSMOS_ENDPOINT: https://placeholder.documents.azure.com:443/
+          BLOB_ACCOUNT_URL: https://placeholder.blob.core.windows.net
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 30
+
+      - name: Dependency vulnerability scan (pip-audit)
+        run: pip-audit --strict
+
+      - name: Bicep lint (fail on warnings)
+        run: |
+          az bicep install
+          az bicep lint --file infra/main.bicep --no-restore
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 2 – Bicep What-If (prod)
+  # Shows exactly what will change before anyone approves the deploy.
+  # Runs in the `prod` GitHub Environment so it can read OIDC secrets.
+  # ────────────────────────────────────────────────────────────────────────────
+  whatif:
+    name: Bicep What-If (prod)
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          # Uses OIDC token exchange — no password/client-secret stored
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Bicep What-If (no destructive changes without review)
+        run: |
+          az deployment group what-if \
+            --resource-group ${{ env.RG_PROD }} \
+            --template-file infra/main.bicep \
+            --parameters @infra/prod.bicepparam \
+            --result-format FullResourcePayloads \
+            --no-pretty-print
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 3 – Deploy to Prod
+  # Gated by GitHub Environments required reviewer + successful whatif.
+  # ────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Prod
+    needs: whatif
+    runs-on: ubuntu-latest
+    environment: prod       # human reviewer approval required
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false   # never cancel an in-flight deployment
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Bicep CLI
+        run: az bicep install
+
+      - name: Deploy Bicep (infra)
+        run: |
+          az deployment group create \
+            --resource-group ${{ env.RG_PROD }} \
+            --template-file infra/main.bicep \
+            --parameters @infra/prod.bicepparam \
+            --name "deploy-$(date +%Y%m%d%H%M%S)"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt azure-functions-core-tools
+
+      - name: Deploy Function App (Python isolated process)
+        run: |
+          func azure functionapp publish ${{ env.FUNC_APP_PROD }} \
+            --python \
+            --build remote
+
+      - name: Import Logic Apps definitions
+        run: python -m scripts.import_logic_apps
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_RESOURCE_GROUP: ${{ env.RG_PROD }}
+
+      - name: Run PromptFlow safety evals (fail-fast gate, threshold 0.90)
+        run: python -m scripts.run_promptflow_evals --env prod --fail-under 0.90
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ secrets.FOUNDRY_PROJECT_ENDPOINT_PROD }}
+
+      - name: Run E2E synthetic renewals (20/20 must reach terminal state)
+        run: pytest tests/test_e2e/ -v -m e2e --timeout=300
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ secrets.FOUNDRY_PROJECT_ENDPOINT_PROD }}
+          KEY_VAULT_URI: ${{ secrets.KEY_VAULT_URI_PROD }}
+          COSMOS_ENDPOINT: ${{ secrets.COSMOS_ENDPOINT_PROD }}
+          BLOB_ACCOUNT_URL: ${{ secrets.BLOB_ACCOUNT_URL_PROD }}
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Job 4 – Post-deploy health check
+  # ────────────────────────────────────────────────────────────────────────────
+  healthcheck:
+    name: Post-deploy Health Check
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Assert Function App running
+        run: |
+          STATE=$(az functionapp show \
+            --name ${{ env.FUNC_APP_PROD }} \
+            --resource-group ${{ env.RG_PROD }} \
+            --query state -o tsv)
+          echo "Function App state: $STATE"
+          test "$STATE" = "Running"
+
+      - name: Smoke test /api/status endpoint
+        run: |
+          URL="https://${{ env.FUNC_APP_PROD }}.azurewebsites.net/api/status"
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "x-functions-key: ${{ secrets.FUNC_KEY_PROD }}" "$URL")
+          echo "Status endpoint returned: $HTTP"
+          test "$HTTP" -eq 200

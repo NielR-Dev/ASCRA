@@ -1,0 +1,118 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "SSL Renewal — CSR Approval Required",
+      "weight": "Bolder",
+      "size": "Large",
+      "wrap": true,
+      "accessibilityLabel": "SSL Renewal CSR Approval Required"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Please review the details below and approve or reject this certificate signing request.",
+      "wrap": true,
+      "color": "Default",
+      "spacing": "Small"
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        {
+          "title": "Hostname (CN):",
+          "value": "${cn}"
+        },
+        {
+          "title": "SAN List:",
+          "value": "${san_joined}"
+        },
+        {
+          "title": "Owning Application:",
+          "value": "${owning_application}"
+        },
+        {
+          "title": "Jira Ticket:",
+          "value": "[${jira_ticket}](${jira_url})"
+        },
+        {
+          "title": "Requested At:",
+          "value": "${requested_at}"
+        },
+        {
+          "title": "Workflow ID:",
+          "value": "${workflow_id}"
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "style": "Attention",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "⚠ ANOMALY: ${anomaly_message}",
+          "wrap": true,
+          "color": "Attention",
+          "isVisible": "${has_anomaly}",
+          "accessibilityLabel": "Warning: Anomaly detected — ${anomaly_message}"
+        }
+      ]
+    },
+    {
+      "type": "Input.Text",
+      "id": "reasoning",
+      "label": "Reason (required for reject)",
+      "placeholder": "Enter your reasoning here — required if rejecting",
+      "isMultiline": true,
+      "maxLength": 1000,
+      "spacing": "Medium",
+      "accessibilityLabel": "Enter reason for your decision. Required if rejecting."
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "title": "Approve",
+      "id": "approve",
+      "style": "positive",
+      "associatedInputIds": [],
+      "data": {
+        "decision": "APPROVED",
+        "thread_id": "${thread_id}",
+        "workflow_id": "${workflow_id}"
+      },
+      "tooltip": "Approve this CSR renewal request"
+    },
+    {
+      "type": "Action.Submit",
+      "title": "Reject",
+      "id": "reject",
+      "style": "destructive",
+      "associatedInputIds": ["reasoning"],
+      "data": {
+        "decision": "REJECTED",
+        "thread_id": "${thread_id}",
+        "workflow_id": "${workflow_id}"
+      },
+      "tooltip": "Reject this CSR renewal request"
+    }
+  ],
+  "minHeight": "200px",
+  "_comment_accessibility": "WCAG 2.2 AA: every input and action has a text label; color is not the sole signal (actions are labelled Approve/Reject, not only styled positive/destructive); contrast >= 4.5:1 using IBM Carbon g10 tokens; tab order flows top-to-bottom naturally.",
+  "_comment_callback": "On Action.Submit, Teams posts: { thread_id, decision, approver: user.email, reasoning } to POST /api/approval-callback. Entra identity of the submitter is available via the Teams auth context and must be validated server-side before accepting the decision.",
+  "_comment_template_vars": {
+    "cn": "string — Common Name, e.g. api.prod.example.com",
+    "san_joined": "string — comma-separated SAN list, e.g. api.prod.example.com, api-internal.prod.example.com",
+    "owning_application": "string — e.g. Orders-API",
+    "jira_ticket": "string — e.g. SSL-4821",
+    "jira_url": "string — https://jira.example.com/browse/SSL-4821",
+    "requested_at": "string — ISO 8601, e.g. 2026-07-28T13:05:40Z",
+    "workflow_id": "string — e.g. wf_2026-07-28_api.prod.example.com_7f3a",
+    "thread_id": "string — correlation id for callback validation",
+    "has_anomaly": "boolean — true if a CN/SAN anomaly was flagged (not in CMDB, etc.)",
+    "anomaly_message": "string — human-readable anomaly description (only shown if has_anomaly=true)"
+  }
+}

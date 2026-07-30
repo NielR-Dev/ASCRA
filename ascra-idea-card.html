@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Idea 03 : Autonomous SSL Certificate Renewal Agent (ASCRA)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #e8e8e8;
+    font-family: Arial, 'Helvetica Neue', sans-serif;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 48px;
+    min-height: 100vh;
+  }
+
+  .slide {
+    background: #ffffff;
+    width: 100%;
+    max-width: 1160px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    border: 1px solid #ccc;
+  }
+
+  /* ── TOP HEADER ── */
+  .slide-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 18px 22px 14px 22px;
+    border-bottom: 3px solid #1F3864;
+  }
+
+  .idea-title {
+    font-size: 26px;
+    font-weight: 900;
+    color: #1F3864;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+  }
+
+  /* ── SERVICE LINE TABLE ── */
+  .service-line-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    margin-left: 24px;
+  }
+
+  .sl-table {
+    border-collapse: collapse;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .sl-table th, .sl-table td {
+    border: 1px solid #ccc;
+    text-align: center;
+    padding: 4px 14px;
+    min-width: 80px;
+  }
+
+  .sl-header-cell {
+    background: #FF00C8;
+    color: #fff;
+    font-size: 11px;
+    letter-spacing: .04em;
+    padding: 5px 14px;
+    border: 1px solid #FF00C8;
+    text-align: center;
+    font-weight: 800;
+  }
+
+  .sl-col-one  { background: #008080; color: #fff; }
+  .sl-col-mso  { background: #00B0F0; color: #fff; }
+  .sl-col-seed { background: #7030A0; color: #fff; }
+  .sl-col-corp { background: #00853E; color: #fff; }
+
+  .sl-check {
+    color: #1F3864;
+    font-size: 16px;
+    font-weight: 900;
+    background: #fff;
+  }
+
+  .sl-empty {
+    background: #f5f5f5;
+  }
+
+  /* ── MAIN TABLE ── */
+  .main-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .main-table td {
+    border: 1px solid #c8c8c8;
+    vertical-align: top;
+    padding: 0;
+  }
+
+  .row-label {
+    background: #1F3864;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    width: 175px;
+    min-width: 175px;
+    padding: 12px 14px;
+    vertical-align: middle;
+    text-align: left;
+    line-height: 1.3;
+  }
+
+  .row-content {
+    background: #ffffff;
+    padding: 12px 18px;
+    color: #222;
+    line-height: 1.55;
+    font-size: 13.5px;
+  }
+
+  .row-content.alt {
+    background: #f9f9f9;
+  }
+
+  /* ── DESCRIPTION CELL ── */
+  .section-heading {
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: underline;
+    color: #222;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .desc-block {
+    margin-bottom: 14px;
+  }
+
+  .desc-block:last-child {
+    margin-bottom: 0;
+  }
+
+  .hl-blue   { color: #0070C0; font-weight: 700; }
+  .hl-cyan   { color: #00B0F0; font-weight: 700; }
+  .hl-purple { color: #7030A0; font-weight: 700; }
+  .hl-green  { color: #00853E; font-weight: 700; }
+  .hl-red    { color: #C00000; font-weight: 700; }
+
+  /* ── TIMELINE ROW ── */
+  .timeline-inner {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .tl-cell {
+    padding: 8px 16px;
+    border-right: 1px solid #c8c8c8;
+    white-space: nowrap;
+  }
+
+  .tl-cell:last-child { border-right: none; }
+
+  .tl-label {
+    font-size: 13px;
+    color: #555;
+    display: block;
+  }
+
+  .tl-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: #7030A0;
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* ── COST ── */
+  .cost-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0070C0;
+  }
+
+  /* ── WORKFLOW DIAGRAM ── */
+  .diagram-wrap {
+    margin: 14px 0 10px;
+    padding: 14px 12px 12px;
+    background: #f4f8fd;
+    border: 1px solid #c8ddf0;
+    border-radius: 4px;
+  }
+
+  .diagram-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #1F3864;
+    margin-bottom: 12px;
+  }
+
+  .diagram-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    flex-wrap: nowrap;
+  }
+
+  .diag-step {
+    flex: 1;
+    min-width: 0;
+    background: #fff;
+    border: 1.5px solid #1F3864;
+    border-radius: 4px;
+    padding: 8px 6px 7px;
+    text-align: center;
+    position: relative;
+  }
+
+  .diag-step.hitl {
+    border-color: #C55A11;
+    background: #fff8f3;
+  }
+
+  .diag-step-num {
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    background: #1F3864;
+    border-radius: 2px;
+    padding: 1px 5px;
+    display: inline-block;
+    margin-bottom: 5px;
+  }
+
+  .diag-step.hitl .diag-step-num {
+    background: #C55A11;
+  }
+
+  .diag-step-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #1F3864;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .diag-step.hitl .diag-step-name {
+    color: #843c0c;
+  }
+
+  .diag-step-tool {
+    font-size: 9.5px;
+    color: #555;
+    line-height: 1.3;
+    margin-bottom: 5px;
+  }
+
+  .diag-badge {
+    display: inline-block;
+    font-size: 8.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  .badge-auto {
+    background: #e2f0d9;
+    color: #375623;
+    border: 1px solid #a9d18e;
+  }
+
+  .badge-hitl {
+    background: #fce4d6;
+    color: #843c0c;
+    border: 1px solid #f4b183;
+  }
+
+  .diag-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    color: #1F3864;
+    font-size: 14px;
+    font-weight: 900;
+    position: relative;
+  }
+
+  .diag-arrow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 2px;
+    right: 2px;
+    height: 1.5px;
+    background: #1F3864;
+    transform: translateY(-50%);
+  }
+
+  .diag-arrow-head {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid #1F3864;
+  }
+
+  .diagram-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #444;
+  }
+
+  .legend-swatch {
+    width: 24px;
+    height: 10px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+
+  .ls-auto { background: #e2f0d9; border-color: #a9d18e; }
+  .ls-hitl { background: #fce4d6; border-color: #f4b183; }
+
+  /* ── AS-IS DIAGRAM ── */
+  .asis-diagram {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 0 6px;
+    flex-wrap: wrap;
+  }
+
+  .asis-box {
+    font-size: 10px;
+    padding: 4px 9px;
+    border: 1.5px dashed #999;
+    border-radius: 3px;
+    color: #555;
+    background: #fafafa;
+    white-space: nowrap;
+  }
+
+  .asis-arrow {
+    color: #aaa;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .asis-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #C00000;
+    margin-right: 4px;
+    white-space: nowrap;
+  }
+
+  /* ── FOOTER ── */
+  .slide-footer {
+    padding: 8px 22px 12px 22px;
+    font-size: 11px;
+    font-style: italic;
+    color: #666;
+    border-top: 1px solid #ddd;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide">
+
+  <!-- ── HEADER ── -->
+  <div class="slide-header">
+    <div class="idea-title">Idea 03 : Autonomous SSL Certificate Renewal Agent (ASCRA)</div>
+
+    <div class="service-line-wrap">
+      <table class="sl-table">
+        <thead>
+          <tr>
+            <td colspan="4" class="sl-header-cell">Service Line</td>
+          </tr>
+          <tr>
+            <th class="sl-col-one">OneInfra</th>
+            <th class="sl-col-mso">MSO</th>
+            <th class="sl-col-seed">SEED</th>
+            <th class="sl-col-corp">CorpIT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="sl-empty"></td>
+            <td class="sl-check">&#10003;</td>
+            <td class="sl-empty"></td>
+            <td class="sl-empty"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── MAIN CONTENT ── -->
+  <table class="main-table">
+
+    <!-- Title -->
+    <tr>
+      <td class="row-label">Title</td>
+      <td class="row-content">
+        <strong>Autonomous SSL Certificate Renewal Agent (ASCRA)</strong> — SSL / TLS Certificate Operations Automation
+      </td>
+    </tr>
+
+    <!-- Description -->
+    <tr>
+      <td class="row-label">Description*</td>
+      <td class="row-content">
+
+        <div class="desc-block">
+          <span class="section-heading">As-is State</span>
+          The current SSL/TLS certificate renewal process is <strong>entirely manual</strong>, spanning
+          <span class="hl-blue">six disconnected steps</span> across Dynatrace, Jira, Microsoft Teams,
+          PKI email, manual X.509 verification, and ServiceNow. Each renewal takes
+          <span class="hl-cyan">1–5 business days per certificate</span>. The process is serial —
+          <span class="hl-blue">only 1–2 renewals per day</span> are achievable at peak. Engineers must
+          log into multiple tools and interfaces to compile and submit requests by hand. Expiry waves cause
+          <strong>production TLS outages</strong> when the manual queue overflows. The process produces
+          <span class="hl-red">incomplete audit trails</span>, introduces human error at every step, and
+          creates <strong>private-key exposure risk</strong> through manual handling.
+          This highly time-consuming process limits the team's capacity to focus on higher-value,
+          business-critical activities.
+        </div>
+
+        <!-- ── AS-IS WORKFLOW (inline, compact) ── -->
+        <div style="margin: 2px 0 16px;">
+          <div style="font-size:11px;font-weight:700;color:#C00000;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">&#9888; Current Manual Process — avg. 1–5 business days per certificate</div>
+          <div class="asis-diagram">
+            <span class="asis-label">Engineer:</span>
+            <span class="asis-box">1. Check Dynatrace</span>
+            <span class="asis-arrow">&#8594;</span>
+            <span class="asis-box">2. Generate CSR manually</span>
+            <span class="asis-arrow">&#8594;</span>
+            <span class="asis-box">3. Open Jira ticket</span>
+            <span class="asis-arrow">&#8594;</span>
+            <span class="asis-box">4. Get PD approval</span>
+            <span class="asis-arrow">&#8594;</span>
+            <span class="asis-box">5. Email PKI team</span>
+            <span class="asis-arrow">&#8594;</span>
+            <span class="asis-box">6. Verify CER manually</span>
+            <span class="asis-arrow">&#8594;</span>
+            <span class="asis-box">7. Raise ServiceNow CHG</span>
+          </div>
+        </div>
+
+        <div class="desc-block">
+          <span class="section-heading">To-be State</span>
+          By deploying <strong>ASCRA</strong>, an <span class="hl-blue">Agentic AI orchestrator</span>
+          (Azure AI Foundry · GPT-4o · MAF 1.0) automates <span class="hl-cyan">5 of the 6 renewal steps</span>
+          end-to-end. The single preserved human gate — <strong>Product Director approval via an Adaptive Card
+          in Microsoft Teams</strong> — is the only required human action. ASCRA automatically:
+          ingests Dynatrace expiry alerts, generates the CSR in an <span class="hl-green">FIPS 140-2 L3 Hardware Security Module</span>
+          (private key <strong>never leaves Key Vault</strong>), opens the Jira ticket, emails the PKI team,
+          performs a <span class="hl-blue">deterministic X.509 verification</span> (CN, SAN, chain, expiry ≥ 365 days),
+          and raises the ServiceNow Pre-Approved Change ticket. The cycle time drops from
+          <span class="hl-red">1–5 business days</span> to <span class="hl-cyan">minutes per certificate</span>.
+          A fleet-scale batch coordinator handles <span class="hl-blue">100+ concurrent renewals</span> from a single
+          expiry wave. Every tool call produces a <strong>tamper-evident, hash-chained audit record</strong>
+          stored for 7 years in immutable Blob storage, ensuring full HIPAA / ISO 27001 / SOC 2 compliance.
+          Eight non-negotiable guardrails (G1–G8) are enforced in code — not by the LLM — with zero waivers.
+        </div>
+
+        <!-- ── TO-BE WORKFLOW DIAGRAM ── -->
+        <div class="diagram-wrap">
+          <div class="diagram-title">ASCRA — Automated Renewal Workflow (To-be)</div>
+          <div class="diagram-row">
+
+            <div class="diag-step">
+              <div class="diag-step-num">T1</div>
+              <div class="diag-step-name">Alert<br>Ingestion</div>
+              <div class="diag-step-tool">Dynatrace webhook<br>&#8594; Event Grid<br>&#8594; Service Bus</div>
+              <span class="diag-badge badge-auto">Auto</span>
+            </div>
+
+            <div class="diag-arrow"><div class="diag-arrow-head"></div></div>
+
+            <div class="diag-step">
+              <div class="diag-step-num">T2</div>
+              <div class="diag-step-name">CSR<br>Generation</div>
+              <div class="diag-step-tool">Key Vault HSM<br>RSA-2048 key<br>Jira ticket opened</div>
+              <span class="diag-badge badge-auto">Auto</span>
+            </div>
+
+            <div class="diag-arrow"><div class="diag-arrow-head"></div></div>
+
+            <div class="diag-step hitl">
+              <div class="diag-step-num">T3</div>
+              <div class="diag-step-name">PD Approval<br>Gate</div>
+              <div class="diag-step-tool">Adaptive Card 1.5<br>Microsoft Teams<br>48h auto-escalate</div>
+              <span class="diag-badge badge-hitl">HITL &#9733;</span>
+            </div>
+
+            <div class="diag-arrow"><div class="diag-arrow-head"></div></div>
+
+            <div class="diag-step">
+              <div class="diag-step-num">T4</div>
+              <div class="diag-step-name">PKI Email<br>Dispatch</div>
+              <div class="diag-step-tool">Microsoft Graph<br>CSR Request Form<br>to Client PKI</div>
+              <span class="diag-badge badge-auto">Auto</span>
+            </div>
+
+            <div class="diag-arrow"><div class="diag-arrow-head"></div></div>
+
+            <div class="diag-step">
+              <div class="diag-step-num">T5</div>
+              <div class="diag-step-name">CER<br>Verification</div>
+              <div class="diag-step-tool">Deterministic X.509<br>CN · SAN · chain<br>expiry &#8805; 365 days</div>
+              <span class="diag-badge badge-auto">Auto</span>
+            </div>
+
+            <div class="diag-arrow"><div class="diag-arrow-head"></div></div>
+
+            <div class="diag-step">
+              <div class="diag-step-num">T6</div>
+              <div class="diag-step-name">Change<br>Ticket</div>
+              <div class="diag-step-tool">ServiceNow<br>Pre-Approved CHG<br>CER attached</div>
+              <span class="diag-badge badge-auto">Auto</span>
+            </div>
+
+          </div><!-- end diagram-row -->
+
+          <!-- State machine strip -->
+          <div style="margin-top:10px;padding:6px 10px;background:#fff;border:1px solid #c8ddf0;border-radius:3px;font-size:10px;color:#555;line-height:1.8;">
+            <span style="font-weight:700;color:#1F3864;">State Machine: </span>
+            <span style="color:#0070C0;font-weight:700;">ALERT_RECEIVED</span> &#8594;
+            <span style="color:#0070C0;">PARSED</span> &#8594;
+            <span style="color:#0070C0;">CSR_READY</span> &#8594;
+            <span style="color:#0070C0;">CSR_REQUESTED</span> &#8594;
+            <span style="color:#00853E;font-weight:700;">APPROVED</span> &#8594;
+            <span style="color:#0070C0;">PKI_REPLIED</span> &#8594;
+            <span style="color:#0070C0;">VERIFIED</span> &#8594;
+            <span style="color:#00853E;font-weight:700;">COMPLETE &#10003;</span>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <span style="color:#C00000;">REJECTED &#8855;</span> &nbsp;
+            <span style="color:#C00000;">FAILED &#8855;</span>
+            &nbsp;(terminal) &nbsp;·&nbsp;
+            <em>Transitions enforced in code — LLM cannot bypass</em>
+          </div>
+
+          <div class="diagram-legend">
+            <div class="legend-item"><div class="legend-swatch ls-auto"></div> Fully Autonomous (5 of 6 steps)</div>
+            <div class="legend-item"><div class="legend-swatch ls-hitl"></div> Human-in-the-Loop — Product Director approval only (&#9733; single preserved gate)</div>
+          </div>
+        </div><!-- end diagram-wrap -->
+
+      </td>
+    </tr>
+
+    <!-- POC Scope -->
+    <tr>
+      <td class="row-label">Proof-of-Concept (POC) Scope*</td>
+      <td class="row-content alt">
+        The scope of the proposed POC covers the implementation of the full
+        <span class="hl-blue">6-step renewal workflow</span> in the <strong>staging environment</strong>
+        for <span class="hl-cyan">5 standard in-scope certificates</span>, each from a different application
+        managed by the <span class="hl-blue">MSO team</span>. The selected certificates will include a
+        mix of single-hostname and multi-SAN types, ensuring coverage across varied PKI submission
+        patterns. Existing <strong>Dynatrace SSL-expiry monitoring</strong> and the established
+        <strong>PKI email workflow</strong> provide the consistent baseline for validation and comparison.
+        The POC validates: autonomous steps T1–T2 and T4–T6, the <strong>HITL PD approval gate</strong>
+        via Adaptive Card, deterministic CER verification, idempotent retry behaviour, and
+        end-to-end audit trail completeness — from Dynatrace alert to ServiceNow change ticket.
+      </td>
+    </tr>
+
+    <!-- Timeline -->
+    <tr>
+      <td class="row-label">Planned POC Timeline*</td>
+      <td class="row-content" style="padding: 0;">
+        <div class="timeline-inner">
+          <div class="tl-cell">
+            <span class="tl-label">POC Duration</span>
+            <span class="tl-value">12 Weeks</span>
+          </div>
+          <div class="tl-cell">
+            <span class="tl-label">POC Start Date</span>
+            <span class="tl-value" style="color:#555;font-style:italic">TBD</span>
+          </div>
+          <div class="tl-cell">
+            <span class="tl-label">POC End Date</span>
+            <span class="tl-value" style="color:#555;font-style:italic">TBD</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+
+    <!-- Cost -->
+    <tr>
+      <td class="row-label">Estimated POC Cost*</td>
+      <td class="row-content alt">
+        Idea POC execution effort: <span class="cost-value">~30 person-days</span>
+        &nbsp;(full v1.0 MVP delivery: ~55 person-days &nbsp;·&nbsp; v1.1 hardening: ~27 person-days &nbsp;·&nbsp; v2.0 expansion: ~40+ person-days)
+      </td>
+    </tr>
+
+    <!-- Benefits -->
+    <tr>
+      <td class="row-label">Potential Benefits</td>
+      <td class="row-content">
+        Across all in-scope SSL/TLS certificates managed by the MSO team, the model projects a
+        <span class="hl-purple">≥80% reduction in mean renewal cycle time</span>
+        (from 1–5 business days to minutes per certificate). &nbsp;
+        <span class="hl-purple">≥95% of renewals</span> become fully autonomous, requiring no human action
+        beyond the preserved PD approval gate. &nbsp;
+        <span class="hl-green">100% structured audit coverage</span> on every tool call, replacing the current
+        partial and inconsistent records. &nbsp; Batch throughput scales from
+        <span class="hl-red">1–2 renewals per day</span> (serial, manual) to
+        <span class="hl-cyan">100+ renewals per hour</span> sustained — draining a 100-certificate expiry wave in
+        under 1 business day. &nbsp; <span class="hl-green">Zero private-key exposure</span> and zero
+        mis-issuance incidents (CN/SAN mismatch blocked deterministically in code).
+      </td>
+    </tr>
+
+    <!-- Stakeholders -->
+    <tr>
+      <td class="row-label">Stakeholders &amp; Dependencies</td>
+      <td class="row-content alt">
+        ODC Innovation Team (IBM AI Team + Client ODC),&nbsp; MSO Team (SSL / Platform Engineer, Product Director),&nbsp; Client PKI Team,&nbsp; DNA Tandem Team,&nbsp; SRE / On-call,&nbsp; Security &amp; Compliance (Audit)
+      </td>
+    </tr>
+
+  </table>
+
+  <div class="slide-footer">
+    * Full technical specifications, architecture decisions, guardrail definitions, data models, and security controls are detailed in the
+    <em>SSL Renewal Agentic AI Implementation Guide v1.3 (2026-07-28)</em>.
+  </div>
+
+</div>
+
+</body>
+</html>

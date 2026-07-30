@@ -1,0 +1,8 @@
+{
+  "hostname": "api.prod.test-domain.com",
+  "problemId": "P-12345",
+  "problemTitle": "SSL Certificate Expiry Alert",
+  "severity": "HIGH",
+  "owning_application": "Orders-API",
+  "timestamp": "2026-07-28T13:02:11Z"
+}

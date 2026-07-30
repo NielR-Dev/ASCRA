@@ -1,0 +1,10 @@
+{
+  "alert": {
+    "cn": "api.prod.test-domain.com",
+    "san": ["api.prod.test-domain.com", "api-internal.prod.test-domain.com"],
+    "owning_application": "Orders-API",
+    "source": "dynatrace",
+    "problem_id": "P-12345",
+    "received_at": "2026-07-28T13:02:11Z"
+  }
+}

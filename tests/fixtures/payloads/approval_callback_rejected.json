@@ -1,0 +1,7 @@
+{
+  "thread_id": "wf_2026-07-28_portal.prod.test-domain.com_2b9d",
+  "workflow_id": "wf_2026-07-28_portal.prod.test-domain.com_2b9d",
+  "decision": "REJECTED",
+  "approver": "pd@test-domain.com",
+  "reasoning": "CN does not match current CMDB record. Application owner must update CMDB first."
+}

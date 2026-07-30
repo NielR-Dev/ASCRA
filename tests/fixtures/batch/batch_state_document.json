@@ -1,0 +1,50 @@
+{
+  "id": "batch_2026-07-28_wave_ca-rotation_4a1c",
+  "batch_id": "batch_2026-07-28_wave_ca-rotation_4a1c",
+  "source": "expiry-wave",
+  "created_at": "2026-07-28T13:00:00Z",
+  "concurrency_limit": 20,
+  "children": [
+    {
+      "workflow_id": "wf_2026-07-28_api.prod.test-domain.com_7f3a",
+      "cn": "api.prod.test-domain.com",
+      "state": "COMPLETE"
+    },
+    {
+      "workflow_id": "wf_2026-07-28_auth.prod.test-domain.com_8b4c",
+      "cn": "auth.prod.test-domain.com",
+      "state": "COMPLETE"
+    },
+    {
+      "workflow_id": "wf_2026-07-28_portal.prod.test-domain.com_2b9d",
+      "cn": "portal.prod.test-domain.com",
+      "state": "REJECTED"
+    },
+    {
+      "workflow_id": "wf_2026-07-28_notify.prod.test-domain.com_3c8e",
+      "cn": "notify.prod.test-domain.com",
+      "state": "FAILED"
+    },
+    {
+      "workflow_id": "wf_2026-07-28_reporting.prod.test-domain.com_5d1f",
+      "cn": "reporting.prod.test-domain.com",
+      "state": "COMPLETE"
+    }
+  ],
+  "aggregate": {
+    "total": 5,
+    "by_state": {
+      "COMPLETE": 3,
+      "REJECTED": 1,
+      "FAILED": 1
+    },
+    "retries": 6,
+    "escalations": 2
+  },
+  "approval": {
+    "mode": "batch",
+    "approver": "pd@test-domain.com",
+    "decided_at": "2026-07-28T13:20:03Z"
+  },
+  "schema_version": 1
+}

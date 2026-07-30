@@ -1,0 +1,21 @@
+{
+  "batch_id": "batch_2026-07-28_wave_ca-rotation_4a1c",
+  "approver": "pd@test-domain.com",
+  "decisions": [
+    {
+      "workflow_id": "wf_2026-07-28_api.prod.test-domain.com_7f3a",
+      "decision": "APPROVED",
+      "reasoning": "All SANs verified against CMDB."
+    },
+    {
+      "workflow_id": "wf_2026-07-28_auth.prod.test-domain.com_8b4c",
+      "decision": "APPROVED",
+      "reasoning": "All SANs verified against CMDB."
+    },
+    {
+      "workflow_id": "wf_2026-07-28_portal.prod.test-domain.com_2b9d",
+      "decision": "REJECTED",
+      "reasoning": "CN mismatch detected — owner must update CMDB."
+    }
+  ]
+}

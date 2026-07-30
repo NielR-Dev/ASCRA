@@ -1,0 +1,37 @@
+[
+  {
+    "cn": "api.prod.test-domain.com",
+    "san": ["api.prod.test-domain.com", "api-internal.prod.test-domain.com"],
+    "problemId": "P-12350",
+    "owning_application": "Orders-API",
+    "timestamp": "2026-07-28T13:00:00Z"
+  },
+  {
+    "cn": "auth.prod.test-domain.com",
+    "san": ["auth.prod.test-domain.com"],
+    "problemId": "P-12351",
+    "owning_application": "Auth-Service",
+    "timestamp": "2026-07-28T13:00:05Z"
+  },
+  {
+    "cn": "portal.prod.test-domain.com",
+    "san": ["portal.prod.test-domain.com", "portal-dr.prod.test-domain.com"],
+    "problemId": "P-12352",
+    "owning_application": "Patient-Portal",
+    "timestamp": "2026-07-28T13:00:10Z"
+  },
+  {
+    "cn": "notify.prod.test-domain.com",
+    "san": ["notify.prod.test-domain.com"],
+    "problemId": "P-12353",
+    "owning_application": "Notification-Service",
+    "timestamp": "2026-07-28T13:00:15Z"
+  },
+  {
+    "cn": "reporting.prod.test-domain.com",
+    "san": ["reporting.prod.test-domain.com", "reporting-int.prod.test-domain.com"],
+    "problemId": "P-12354",
+    "owning_application": "Reporting-Hub",
+    "timestamp": "2026-07-28T13:00:20Z"
+  }
+]

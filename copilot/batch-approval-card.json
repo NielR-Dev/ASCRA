@@ -1,0 +1,189 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "SSL Renewal — Batch Approval (${batch_id}, ${total} certificates)",
+      "weight": "Bolder",
+      "size": "Large",
+      "wrap": true,
+      "accessibilityLabel": "SSL Renewal Batch Approval for batch ${batch_id} containing ${total} certificates"
+    },
+    {
+      "type": "TextBlock",
+      "text": "Review each certificate below. Use per-row toggles or bulk actions. Certificates not explicitly acted on remain PENDING — none are auto-approved.",
+      "wrap": true,
+      "color": "Default",
+      "spacing": "Small"
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        {
+          "title": "Total Certificates:",
+          "value": "${total}"
+        },
+        {
+          "title": "Owning Applications:",
+          "value": "${distinct_owners}"
+        },
+        {
+          "title": "Requested At:",
+          "value": "${requested_at}"
+        },
+        {
+          "title": "Batch ID:",
+          "value": "${batch_id}"
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "style": "Attention",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "[ANOMALY FLAGGED] ${anomaly_count} certificate(s) have anomalies — review highlighted rows carefully.",
+          "wrap": true,
+          "color": "Attention",
+          "isVisible": "${has_anomalies}",
+          "accessibilityLabel": "Warning: ${anomaly_count} certificates have anomalies. Review highlighted rows."
+        }
+      ]
+    },
+    {
+      "type": "TextBlock",
+      "text": "─── Per-Certificate Decisions ───",
+      "weight": "Bolder",
+      "spacing": "Medium",
+      "accessibilityLabel": "Per-Certificate Decisions Section"
+    },
+    {
+      "type": "Container",
+      "id": "cert_rows_container",
+      "$data": "${certificates}",
+      "items": [
+        {
+          "type": "Container",
+          "style": "${anomaly_flag ? 'attention' : 'default'}",
+          "items": [
+            {
+              "type": "ColumnSet",
+              "columns": [
+                {
+                  "type": "Column",
+                  "width": "stretch",
+                  "items": [
+                    {
+                      "type": "TextBlock",
+                      "text": "${cn}",
+                      "weight": "Bolder",
+                      "wrap": true
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "SANs: ${san_count}  •  Owner: ${owning_application}  •  [Jira: ${jira_ticket}](${jira_url})",
+                      "wrap": true,
+                      "size": "Small",
+                      "color": "Default"
+                    },
+                    {
+                      "type": "TextBlock",
+                      "text": "[ANOMALY] ${anomaly_message}",
+                      "wrap": true,
+                      "color": "Attention",
+                      "size": "Small",
+                      "isVisible": "${anomaly_flag}",
+                      "accessibilityLabel": "Anomaly: ${anomaly_message}"
+                    }
+                  ]
+                },
+                {
+                  "type": "Column",
+                  "width": "auto",
+                  "verticalContentAlignment": "Center",
+                  "items": [
+                    {
+                      "type": "Input.Toggle",
+                      "id": "decision_${workflow_id}",
+                      "title": "Approve ${cn}",
+                      "valueOn": "APPROVED",
+                      "valueOff": "PENDING",
+                      "value": "PENDING",
+                      "label": "Approve ${cn}",
+                      "accessibilityLabel": "Toggle to approve certificate for ${cn}. Default is PENDING."
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "separator": true
+        }
+      ]
+    },
+    {
+      "type": "Input.Text",
+      "id": "batch_reasoning",
+      "label": "Batch Reasoning (required if using Reject All; optional otherwise)",
+      "placeholder": "Enter your overall reasoning here",
+      "isMultiline": true,
+      "maxLength": 2000,
+      "spacing": "Medium",
+      "accessibilityLabel": "Enter reasoning for the batch decision. Required if using Reject All."
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "title": "Submit Selections",
+      "id": "submit_selections",
+      "style": "positive",
+      "data": {
+        "action": "SUBMIT_SELECTIONS",
+        "batch_id": "${batch_id}"
+      },
+      "tooltip": "Submit per-certificate decisions as toggled above"
+    },
+    {
+      "type": "Action.Submit",
+      "title": "Approve All",
+      "id": "approve_all",
+      "style": "positive",
+      "associatedInputIds": ["batch_reasoning"],
+      "data": {
+        "action": "APPROVE_ALL",
+        "batch_id": "${batch_id}"
+      },
+      "tooltip": "Approve all certificates in this batch"
+    },
+    {
+      "type": "Action.Submit",
+      "title": "Reject All",
+      "id": "reject_all",
+      "style": "destructive",
+      "associatedInputIds": ["batch_reasoning"],
+      "data": {
+        "action": "REJECT_ALL",
+        "batch_id": "${batch_id}"
+      },
+      "tooltip": "Reject all certificates in this batch"
+    }
+  ],
+  "_comment_guardrail_G1": "Each per-cert decision is independently recorded in that child's audit_log (G1 preserved per child). A cert not explicitly toggled APPROVED defaults to PENDING — never auto-approved. The server validates every individual decision before recording.",
+  "_comment_callback": "Callback body: { batch_id, decisions: [{workflow_id, decision, reasoning}], approver: user.email }. The server reconstructs per-cert decisions from the toggle values plus any APPROVE_ALL/REJECT_ALL override. Per-cert reasoning is stored on the child workflow_state.approval record.",
+  "_comment_accessibility": "WCAG 2.2 AA: anomalous rows are identified by text label '[ANOMALY]' not color alone; toggle label includes the CN for AT discoverability; all actions have tooltip text; reasoning field has a text label.",
+  "_comment_pagination": "If total > 15, the card is split across pages using Copilot Studio / Power Automate pagination. Each page is a separate card in a card carousel; the callback accumulates decisions across pages before recording.",
+  "_comment_fallback": "The same batch decision set is available via a Power Automate Approval with per-item response, writing the same Cosmos records. The Power Automate flow is triggered when Teams card delivery fails.",
+  "_comment_template_vars": {
+    "batch_id": "string — e.g. batch_2026-07-28_wave_ca-rotation_4a1c",
+    "total": "integer — total certs in batch",
+    "distinct_owners": "string — comma-separated list of owning applications",
+    "requested_at": "string — ISO 8601",
+    "has_anomalies": "boolean",
+    "anomaly_count": "integer",
+    "certificates": "array of { workflow_id, cn, san_count, owning_application, jira_ticket, jira_url, anomaly_flag, anomaly_message }"
+  }
+}

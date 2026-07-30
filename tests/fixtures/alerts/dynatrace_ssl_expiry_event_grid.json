@@ -1,0 +1,21 @@
+{
+  "id": "eg-event-7f3a1b2c",
+  "source": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/ssl-renewal-rg-prod/providers/Microsoft.EventGrid/topics/ssl-renewal-topic",
+  "specversion": "1.0",
+  "type": "Dynatrace.Problem.SSLCertificateExpiry",
+  "time": "2026-07-28T13:02:11Z",
+  "datacontenttype": "application/json",
+  "data": {
+    "cn": "auth.prod.test-domain.com",
+    "san": ["auth.prod.test-domain.com", "auth-internal.prod.test-domain.com"],
+    "problemId": "P-12347",
+    "problemTitle": "SSL Certificate Expiry Alert",
+    "severity": "HIGH",
+    "owning_application": "Auth-Service",
+    "timestamp": "2026-07-28T13:02:11Z",
+    "affectedEntity": {
+      "entityId": "PROCESS_GROUP_INSTANCE-ABCDEF123456",
+      "name": "auth.prod.test-domain.com"
+    }
+  }
+}

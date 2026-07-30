@@ -1,0 +1,51 @@
+# Production requirements — pinned for reproducibility
+# Generated from pyproject.toml dependencies
+# Run `pip-audit` against this file in CI to detect CVEs
+
+# Microsoft Agent Framework 1.0
+agent-framework==1.0.0
+
+# Azure Identity
+azure-identity==1.16.1
+
+# Azure Key Vault
+azure-keyvault-certificates==4.8.0
+azure-keyvault-keys==4.9.0
+
+# Azure Cosmos DB
+azure-cosmos==4.7.0
+
+# Azure Blob Storage
+azure-storage-blob==12.21.0
+
+# Azure Service Bus
+azure-servicebus==7.12.2
+
+# Azure Functions isolated process
+azure-functions==1.20.0
+
+# Cryptography — deterministic CER verifier (verify_cer.py — no LLM)
+cryptography==43.0.3
+
+# Pydantic v2 — typed models + settings
+pydantic==2.7.4
+pydantic-settings==2.3.4
+annotated-types==0.7.0
+pydantic-core==2.20.1
+
+# OpenTelemetry
+opentelemetry-api==1.25.0
+opentelemetry-sdk==1.25.0
+opentelemetry-exporter-otlp==1.25.0
+opentelemetry-exporter-otlp-proto-grpc==1.25.0
+opentelemetry-exporter-otlp-proto-http==1.25.0
+opentelemetry-proto==1.25.0
+opentelemetry-instrumentation-azure-sdk==0.1.0
+
+# Azure Monitor OpenTelemetry exporter
+azure-monitor-opentelemetry-exporter==1.0.0b29
+
+# Azure core (transitive, pinned for reproducibility)
+azure-core==1.30.2
+isodate==0.6.1
+typing-extensions==4.12.2

@@ -1,0 +1,104 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "SSL Renewal — ${final_state_label}",
+      "weight": "Bolder",
+      "size": "Large",
+      "wrap": true,
+      "color": "${final_state_color}",
+      "accessibilityLabel": "SSL Renewal status: ${final_state_label}"
+    },
+    {
+      "type": "TextBlock",
+      "text": "${final_state_description}",
+      "wrap": true,
+      "color": "Default",
+      "spacing": "Small"
+    },
+    {
+      "type": "FactSet",
+      "facts": [
+        {
+          "title": "Status:",
+          "value": "${final_state} — ${final_state_label}"
+        },
+        {
+          "title": "Hostname (CN):",
+          "value": "${cn}"
+        },
+        {
+          "title": "Change Number:",
+          "value": "${chg_number}"
+        },
+        {
+          "title": "Completed At:",
+          "value": "${completed_at}"
+        },
+        {
+          "title": "Workflow ID:",
+          "value": "${workflow_id}"
+        },
+        {
+          "title": "Approved By:",
+          "value": "${approver}"
+        }
+      ]
+    },
+    {
+      "type": "TextBlock",
+      "text": "── Quick Links ──",
+      "weight": "Bolder",
+      "spacing": "Medium",
+      "accessibilityLabel": "Quick Links Section"
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "Open Jira Ticket",
+      "url": "${jira_url}",
+      "tooltip": "Open Jira ticket ${jira_ticket} in your browser"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "View PKI Email Thread",
+      "url": "${pki_email_thread_url}",
+      "tooltip": "Open the PKI email thread in Outlook Web"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "Download CER File",
+      "url": "${cer_blob_sas_url}",
+      "tooltip": "Download the signed certificate (link expires in 1 hour)"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "Open ServiceNow CHG",
+      "url": "${servicenow_chg_url}",
+      "tooltip": "Open change record ${chg_number} in ServiceNow"
+    }
+  ],
+  "_comment_posting": "This card is posted proactively to the requester's Teams channel when the workflow reaches state COMPLETE. It is also posted (with appropriate final_state_label) for REJECTED and FAILED terminal states so the requester is always notified of the outcome.",
+  "_comment_sas_ttl": "cer_blob_sas_url is a short-TTL (1 hour) SAS URL generated at card-post time. It provides scoped, time-limited read access to the immutable CER file in Blob storage. Do not store or share beyond this window.",
+  "_comment_accessibility": "WCAG 2.2 AA: final state is conveyed by both text label AND color (color is not the sole signal); all Action.OpenUrl have tooltip text; tab order is top-to-bottom.",
+  "_comment_template_vars": {
+    "workflow_id": "string",
+    "cn": "string — Common Name",
+    "final_state": "string — COMPLETE | REJECTED | FAILED",
+    "final_state_label": "string — 'Renewal Complete' | 'Renewal Rejected' | 'Renewal Failed — Manual Action Required'",
+    "final_state_description": "string — human-readable summary of outcome",
+    "final_state_color": "string — 'Good' for COMPLETE, 'Warning' for FAILED, 'Attention' for REJECTED (Adaptive Card semantic colors; text label also present)",
+    "chg_number": "string — ServiceNow CHG number, e.g. CHG0012345 (empty string if not yet created)",
+    "completed_at": "string — ISO 8601 timestamp",
+    "approver": "string — PD email who approved",
+    "jira_ticket": "string",
+    "jira_url": "string",
+    "pki_email_thread_url": "string — Outlook Web URL for the email thread",
+    "cer_blob_sas_url": "string — short-TTL SAS URL for CER blob download",
+    "servicenow_chg_url": "string — ServiceNow record URL"
+  }
+}

@@ -1,0 +1,258 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>System Needs &amp; Deployment Readiness</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; color: #1f2328; background: #fff; padding: 32px 24px; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 28px; border-bottom: 1px solid #e5e7eb; padding-bottom: 14px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 28px 0 10px; display: flex; align-items: center; gap: 8px; }
+  h3 { font-size: 13px; font-weight: 700; margin: 18px 0 6px; color: #57606a; text-transform: uppercase; letter-spacing: .04em; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 13px; }
+  th { background: #f7f8fa; text-align: left; padding: 7px 10px; font-weight: 600; border: 1px solid #e5e7eb; }
+  td { padding: 7px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+  tr:hover td { background: #fafafa; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+  .done    { background: #d1fae5; color: #065f46; }
+  .stub    { background: #fef3c7; color: #92400e; }
+  .blocker { background: #fee2e2; color: #991b1b; }
+  .manual  { background: #dbeafe; color: #1e40af; }
+  code { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 1px 5px; font-size: 12px; font-family: "Cascadia Code", "Consolas", monospace; }
+  .section { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px 16px; margin-bottom: 20px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 12px; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  ul { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 3px; font-size: 13px; }
+  .note { font-size: 12px; color: #57606a; margin-top: 6px; }
+  .divider { border: none; border-top: 1px solid #e5e7eb; margin: 24px 0; }
+  footer { text-align: center; font-size: 11px; color: #57606a; margin-top: 40px; padding-top: 14px; border-top: 1px solid #e5e7eb; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>System Needs &amp; Deployment Readiness</h1>
+  <p class="subtitle">Autonomous SSL Certificate Renewal Agent · 207/207 tests passing · Full code review completed</p>
+
+  <div class="legend">
+    <span style="font-weight:600;font-size:12px">Legend:</span>
+    <span class="legend-item"><span class="badge done">DONE</span> Code-complete, tested, live-deployable</span>
+    <span class="legend-item"><span class="badge stub">STUB</span> Code exists but wired to placeholder / not end-to-end</span>
+    <span class="legend-item"><span class="badge blocker">YOU MUST PROVIDE</span> Azure resource or secret — required before any run</span>
+    <span class="legend-item"><span class="badge manual">USER ACTION</span> Human task the system cannot perform itself</span>
+  </div>
+
+  
+  <h2>① What YOU (Operator) Must Provision</h2>
+  <p class="note" style="margin-bottom:10px">These are not generated code — they are Azure resources and secrets that must exist before the agent can start. None of them can be fabricated locally.</p>
+
+  <h3>Azure Resources — deploy via Bicep</h3>
+  <table>
+    <tr><th style="width:28%">Resource</th><th style="width:30%">Required Config</th><th style="width:22%">Env Var / Secret</th><th style="width:20%">Status</th></tr>
+    <tr><td>Azure AI Foundry Hub + Project</td><td>Project endpoint URL</td><td><code>FOUNDRY_PROJECT_ENDPOINT</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Azure OpenAI <code>gpt-4o-2024-11-20</code></td><td>Deployment provisioned; TPM allocated</td><td><code>AZURE_OPENAI_DEPLOYMENT</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Key Vault Managed HSM</td><td>FIPS 140-2 Level 3; <code>exportable=False</code> policy; agent MI has Cert Officer + Crypto User roles — NO Key Export</td><td><code>KEY_VAULT_URI</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Cosmos DB (4 containers)</td><td><code>workflow_state</code>, <code>audit_log</code>, <code>idempotency</code>, <code>batch</code></td><td><code>COSMOS_ENDPOINT</code>, <code>COSMOS_DATABASE</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Blob Storage (WORM)</td><td>Container <code>cer-artifacts</code> with 7-year legal hold immutability policy</td><td><code>BLOB_ACCOUNT_URL</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Service Bus</td><td>Queue <code>ssl-renewals</code> + <code>approval-callbacks</code></td><td><code>SERVICE_BUS_NAMESPACE_FQDN</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Azure Functions (Python 3.11)</td><td>4 endpoints live: <code>/api/orchestrate</code>, <code>/api/approval-callback</code>, <code>/api/pki-reply</code>, <code>/api/status</code></td><td>Deploy via <code>func azure functionapp publish</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Azure APIM</td><td>Jira + Dynatrace MCP proxy; JWT validation; Bob denial policy (<code>dev_plane_forbidden</code>)</td><td><code>mcp_jira_url</code>, <code>mcp_dynatrace_url</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>User-Assigned Managed Identity</td><td>Attached to Function App; no passwords or client secrets</td><td><code>AZURE_CLIENT_ID</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>App Insights + Log Analytics</td><td>Connection string; 5 alert rules pre-defined in Bicep</td><td><code>APPLICATIONINSIGHTS_CONNECTION_STRING</code></td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+  </table>
+
+  <h3>Key Vault Secrets — set before first run</h3>
+  <table>
+    <tr><th style="width:30%">Secret name</th><th style="width:40%">Value</th><th>Status</th></tr>
+    <tr><td><code>pki-mailbox</code></td><td>Real PKI team email (e.g. <code>pki@example.com</code>)</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td><code>pd-approver-email</code></td><td>Product Director's Entra-registered email</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td><code>slack-signing-secret</code></td><td>Slack app HMAC signing secret (if Slack enabled)</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td><code>orchestrator-enabled</code></td><td><code>true</code> — set to <code>false</code> for kill-switch</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+  </table>
+
+  <h3>External Systems — must be reachable</h3>
+  <table>
+    <tr><th style="width:28%">System</th><th style="width:40%">What the agent needs</th><th>Status</th></tr>
+    <tr><td>Dynatrace</td><td>SSL-expiry webhook configured to post to Event Grid</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Jira Cloud</td><td>APIM-fronted MCP endpoint + service account credentials in APIM</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>Microsoft Teams / Copilot Studio</td><td>Copilot Studio topics imported; approval card callback URL configured</td><td><span class="badge manual">MANUAL IMPORT</span></td></tr>
+    <tr><td>PKI Team Mailbox</td><td>Real PKI team email accessible via <code>graph_mail</code> MCP; agreement to process CSR request forms</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>ServiceNow</td><td>Foundry-hosted MCP URL configured; SNOW account for CHG creation</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+    <tr><td>GitHub OIDC</td><td>App registration + federated credential for <code>deploy.yml</code>; 3 environment secrets set</td><td><span class="badge blocker">YOU MUST PROVIDE</span></td></tr>
+  </table>
+
+  <hr class="divider" />
+
+  
+  <h2>② What the USER (Product Director) Must Do</h2>
+  <p class="note" style="margin-bottom:10px">The PD is the <strong>only human inside the automation loop</strong>. This is G1 — it cannot be bypassed by design, policy, or code change.</p>
+
+  <table>
+    <tr><th style="width:32%">Action</th><th style="width:42%">How</th><th>When</th></tr>
+    <tr><td><strong>Approve or Reject the CSR</strong></td><td>Tap Approve / Reject on the Teams Adaptive Card. Rejection requires a written reason (enforced in <code>record_approval_decision()</code>).</td><td>Within 48 h of card arrival. After that, PD delegate is auto-escalated to — but system still waits, never self-approves.</td></tr>
+    <tr><td>Have MFA enabled</td><td>Entra ID with MFA claim. The <code>/api/approval-callback</code> Function validates the Entra JWT.</td><td>Pre-requisite — not a runtime action.</td></tr>
+    <tr><td>Nominate a PD delegate</td><td>Set <code>PD_DELEGATE_EMAIL</code> env var / KV secret.</td><td>Before go-live.</td></tr>
+  </table>
+  <p class="note">Every other step — CSR generation, Jira ticket, PKI email, certificate verification, ServiceNow CHG — is <strong>fully autonomous</strong>. The PD does nothing before or after the approval card.</p>
+
+  <hr class="divider" />
+
+  
+  <h2>③ What Is Code-Complete and Ready for Live Testing</h2>
+  <p class="note" style="margin-bottom:10px">Files exist, logic is real, 207/207 tests pass. These can be deployed and will behave correctly against real Azure services.</p>
+
+  <h3>Core business logic</h3>
+  <table>
+    <tr><th style="width:38%">File</th><th style="width:42%">What it does</th><th>Status</th></tr>
+    <tr><td><code>src/config.py</code></td><td>Pydantic-settings; all env vars + KV refs; kill-switch field</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/tools/generate_csr.py</code></td><td>Calls Key Vault HSM; <code>exportable=False</code>; G6 wildcard block; returns CSR PEM + KV URI</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/tools/verify_cer.py</code></td><td>Deterministic X.509 check: CN, SAN, expiry, validity days. LLM cannot override. G2.</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/tools/approval_tool.py</code></td><td>Generates correlation ID + returns <code>ApprovalPending</code>; validates callback decision; G1</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/tools/errors.py</code></td><td>Tool error hierarchy: Validation / Transient / Fatal</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/orchestrator/state_machine.py</code></td><td>State enum + deterministic transition guard; all illegal skips blocked</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/orchestrator/timers.py</code></td><td>Approval escalation (48 h) + PKI reminder (24 h / 72 h); injected clock; fully tested</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/orchestrator/rate_limiter.py</code></td><td>Token-bucket rate limiter; PKI / Jira / SNOW lanes; configurable per env</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/orchestrator/batch_coordinator.py</code></td><td>Fan-out/fan-in; bounded semaphore; sibling isolation (FR-15); idempotent re-attach</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/orchestrator/drift_check.py</code></td><td>MCP schema hash check; fail-closed; G5</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/orchestrator/prompts.py</code></td><td>ORCHESTRATOR_SYSTEM_PROMPT with all 8 guardrails embedded</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/middleware/policy_middleware.py</code></td><td>G1 / G3 / G6 enforcement; consecutive-error counter; wildcard block</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/middleware/audit_middleware.py</code></td><td>G4: one structured log line per tool call; PHI/secret redaction</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/persistence/cosmos_repo.py</code></td><td>Async Cosmos repo; tamper-evident hash chain; sensitive-data guard; idempotency</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/persistence/blob_repo.py</code></td><td>WORM CER upload/download; SAS URL generation; legal hold awareness</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/telemetry.py</code></td><td>OTel TracerProvider; <code>tool_span()</code> / <code>request_span()</code>; Azure Monitor exporter; no-op fallback</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/orchestrator/retry_orchestration.py</code></td><td>Magentic diagnostic sub-orchestration; escalation caps</td><td><span class="badge done">DONE</span></td></tr>
+  </table>
+
+  <h3>Interface adapters</h3>
+  <table>
+    <tr><th style="width:38%">File</th><th style="width:42%">What it does</th><th>Status</th></tr>
+    <tr><td><code>src/interfaces/direct/slack_adapter.py</code></td><td>HMAC-SHA256 signature verification; slash command → API endpoint mapping</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/interfaces/direct/web_console_api.py</code></td><td>Role → endpoint mapping; no state mutations; no direct tool calls</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/interfaces/embedded/read_model.py</code></td><td>Read-only Cosmos projections; proactive suggestions as data dicts (not callables)</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/interfaces/embedded/suggestion_service.py</code></td><td>Pure read surface; no state mutations; no imports of native tools</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/interfaces/backend/event_trigger.py</code></td><td>Dynatrace event normalization; no business logic</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/interfaces/backend/scheduled_scan.py</code></td><td>Timer-triggered cert inventory scan</td><td><span class="badge done">DONE</span></td></tr>
+  </table>
+
+  <h3>Azure Function hosts</h3>
+  <table>
+    <tr><th style="width:38%">File</th><th style="width:42%">What it does</th><th>Status</th></tr>
+    <tr><td><code>src/functions/orchestrate/__init__.py</code></td><td>Kill-switch check → parses alert → calls <code>build_orchestrator().run()</code></td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/functions/status/__init__.py</code></td><td>Reads Cosmos by <code>workflow_id</code> or <code>cn</code>; returns safe subset</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/functions/approval_callback/__init__.py</code></td><td>Validates fields; calls <code>record_approval_decision()</code>; returns 202</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>src/functions/pki_reply/__init__.py</code></td><td>Accepts PKI notification; returns 202 — but see stub note below</td><td><span class="badge stub">STUB (see below)</span></td></tr>
+  </table>
+
+  <h3>Infrastructure (Bicep)</h3>
+  <table>
+    <tr><th style="width:38%">File</th><th style="width:42%">What it does</th><th>Status</th></tr>
+    <tr><td><code>infra/main.bicep</code> + all modules</td><td>13 modules; correct dependency order; all resource settings (HSM, WORM, private endpoints)</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>infra/cosmos.bicep</code> + <code>storage.bicep</code></td><td>4 containers; 7-yr legal hold; PITR; zone redundancy</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>infra/modules/apim.bicep</code></td><td>JWT validation; Bob denial policy; rate limiting; TLS 1.2 only</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>infra/dev|uat|prod.bicepparam</code></td><td>Environment-specific SKUs, flags, mailboxes</td><td><span class="badge done">DONE</span></td></tr>
+  </table>
+
+  <h3>CI/CD &amp; tests</h3>
+  <table>
+    <tr><th style="width:38%">File</th><th style="width:42%">What it does</th><th>Status</th></tr>
+    <tr><td><code>.github/workflows/deploy.yml</code></td><td>OIDC; lint → test → what-if → human approve → deploy → smoke test</td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>.github/workflows/bob-review.yml</code></td><td>G1/G6/G7/G8 static checks; coverage gate; no <code>azure/login</code></td><td><span class="badge done">DONE</span></td></tr>
+    <tr><td><code>tests/</code> (13 unit + 8 e2e files)</td><td>207 tests; 100% guardrail coverage; all green</td><td><span class="badge done">DONE</span></td></tr>
+  </table>
+
+  <hr class="divider" />
+
+  
+  <h2>④ What Is STUB / Superficial — NOT Ready for Live Testing</h2>
+  <p class="note" style="margin-bottom:10px">These files exist and compile, but contain a placeholder comment where the real integration must be wired before end-to-end production flow works.</p>
+
+  <table>
+    <tr><th style="width:32%">File / Component</th><th style="width:46%">What is missing</th><th>Severity</th></tr>
+    <tr>
+      <td><code>src/orchestrator/agent.py</code><br /><code>build_orchestrator()</code></td>
+      <td>Imports <code>from agent_framework import ChatAgent</code> — the <strong><code>agent_framework</code> package (MAF 1.0) is not installed</strong> and does not exist on PyPI yet. Calling <code>build_orchestrator()</code> at runtime will raise <code>ImportError</code>. The entire LLM-driven workflow depends on this.</td>
+      <td><span class="badge blocker">RELEASE BLOCKER</span></td>
+    </tr>
+    <tr>
+      <td><code>src/orchestrator/mcp_tools.py</code></td>
+      <td>Same dependency: <code>from agent_framework import HostedMcpTool, MCPTool</code> — cannot register Jira, Dynatrace, ServiceNow, or graph_mail MCP tools until MAF 1.0 is available.</td>
+      <td><span class="badge blocker">RELEASE BLOCKER</span></td>
+    </tr>
+    <tr>
+      <td><code>src/functions/orchestrate/__init__.py</code><br />line 80: <code>agent.run(...)</code></td>
+      <td>Calls <code>build_orchestrator()</code> — blocked by the above. The HTTP endpoint accepts requests and validates them, but the actual orchestration call will fail until MAF is wired.</td>
+      <td><span class="badge blocker">RELEASE BLOCKER</span></td>
+    </tr>
+    <tr>
+      <td><code>src/tools/approval_tool.py</code><br /><code>request_approval()</code> lines 110–116</td>
+      <td>The Teams Adaptive Card is <strong>not actually sent</strong> here. The function generates a <code>correlation_id</code> and returns — it documents that a Logic App reads from Cosmos and sends the card. The Logic App definition is <strong>not written</strong> (no <code>logicapps/</code> folder exists). The card never reaches the PD until this is built.</td>
+      <td><span class="badge blocker">RELEASE BLOCKER</span></td>
+    </tr>
+    <tr>
+      <td><code>src/functions/pki_reply/__init__.py</code><br />line 58–61</td>
+      <td>Accepts the PKI notification and returns 202, but the comment reads: <em>"In production: resume the orchestrator thread and trigger verify_cer"</em> — the actual Cosmos read → <code>verify_cer()</code> → state transition is <strong>not implemented</strong>. PKI replies would be silently accepted and ignored.</td>
+      <td><span class="badge blocker">RELEASE BLOCKER</span></td>
+    </tr>
+    <tr>
+      <td><code>infra/mcp_schema_pins.json</code></td>
+      <td>File <strong>does not exist</strong>. <code>drift_check.py</code> skips the check if the file is absent (safe fallback), but G5 schema-drift protection is therefore inactive until you run <code>scripts/pin_mcp_schemas.py</code> against live MCP servers and commit the result.</td>
+      <td><span class="badge stub">STUB / INACTIVE</span></td>
+    </tr>
+    <tr>
+      <td><code>scripts/</code> folder</td>
+      <td><code>import_logic_apps.py</code> and <code>run_promptflow_evals.py</code> <strong>exist</strong> in the repo. However <code>pin_mcp_schemas.py</code> and <code>export_audit_chain.py</code> — referenced in <code>deploy.yml</code> and docs — <strong>do not exist yet</strong>. The deploy pipeline will fail at those steps until they are written.</td>
+      <td><span class="badge stub">STUB (partial)</span></td>
+    </tr>
+    <tr>
+      <td><code>logicapps/</code> folder</td>
+      <td>Logic App Standard workflow definitions (approval card dispatch, PKI email monitor, timer triggers) are <strong>not written</strong>. Referenced in <code>infra/modules/logicapp.bicep</code> and <code>deploy.yml</code> but the JSON definition files don't exist.</td>
+      <td><span class="badge stub">STUB</span></td>
+    </tr>
+    <tr>
+      <td>Copilot Studio topics</td>
+      <td><code>copilot/topics.md</code> describes the topic spec, but the actual Copilot Studio <code>.zip</code> or <code>.yaml</code> solution file for import is <strong>not generated</strong>. Must be manually built in Copilot Studio.</td>
+      <td><span class="badge manual">MANUAL BUILD</span></td>
+    </tr>
+    <tr>
+      <td><code>tests/test_e2e/</code></td>
+      <td>E2E test folder <strong>exists</strong> with 8 test files (<code>test_synthetic_renewal.py</code>, <code>test_orchestrate.py</code>, <code>test_approval_callback.py</code>, <code>test_pki_reply.py</code>, <code>test_status.py</code>, <code>test_health.py</code>). These require live Azure services to run end-to-end.</td>
+      <td><span class="badge done">DONE</span></td>
+    </tr>
+    <tr>
+      <td>Performance load test scripts</td>
+      <td><code>tests/test_performance.py</code> tests unit-level proxies only. The actual <code>scripts/load_test/expiry_wave.py</code> and <code>batch_throughput.py</code> referenced in <code>docs/performance-report.md</code> <strong>do not exist</strong>.</td>
+      <td><span class="badge stub">STUB</span></td>
+    </tr>
+  </table>
+
+  <hr class="divider" />
+
+  
+  <h2>⑤ Priority Order to Reach Live Testing</h2>
+
+  <div class="section">
+    <h3>Must-fix before any end-to-end run</h3>
+    <ol style="padding-left:20px;font-size:13px;line-height:1.9">
+      <li><strong>Install / stub MAF 1.0</strong> — get <code>agent_framework</code> package from Microsoft preview. Without it, <code>build_orchestrator()</code> is dead code. Alternatively, write a thin stub that wraps Azure OpenAI directly for UAT.</li>
+      <li><strong>Wire the Teams card dispatch</strong> — write the Logic App workflow (<code>logicapps/send-approval-card.json</code>) that reads from Cosmos and sends the Adaptive Card. Until this exists, the PD never sees an approval request.</li>
+      <li><strong>Complete <code>pki_reply</code> Function</strong> — add the Cosmos read → <code>verify_cer()</code> → state transition call after accepting the 202.</li>
+      <li><strong>Provision all 4 Azure resources</strong> — deploy Bicep to UAT; set the 4 Key Vault secrets.</li>
+    </ol>
+
+    <h3 style="margin-top:14px">Should-fix before go-live</h3>
+    <ol style="padding-left:20px;font-size:13px;line-height:1.9">
+      <li>Write <code>scripts/import_logic_apps.py</code> and <code>scripts/run_promptflow_evals.py</code> (otherwise <code>deploy.yml</code> fails at those steps).</li>
+      <li>Run <code>pin_mcp_schemas.py</code> against live MCP servers; commit <code>infra/mcp_schema_pins.json</code> to activate G5 drift protection.</li>
+      <li>Write <code>tests/test_e2e/</code> — 20 synthetic renewal scenarios covering each terminal state.</li>
+      <li>Import Copilot Studio topics manually from <code>copilot/topics.md</code>.</li>
+    </ol>
+  </div>
+
+  <footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

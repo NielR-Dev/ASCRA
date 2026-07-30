@@ -1,0 +1,7 @@
+{
+  "thread_id": "wf_2026-07-28_api.prod.test-domain.com_7f3a",
+  "workflow_id": "wf_2026-07-28_api.prod.test-domain.com_7f3a",
+  "decision": "APPROVED",
+  "approver": "pd@test-domain.com",
+  "reasoning": "Verified CN and SAN match CMDB record for Orders-API. Proceeding."
+}
